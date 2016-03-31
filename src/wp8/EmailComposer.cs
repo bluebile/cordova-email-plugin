@@ -23,6 +23,10 @@ using De.Martinreinhardt.Cordova.Plugins.Email;
 using Microsoft.Phone.Tasks;
 using System;
 using System.Linq;
+using System.Threading.Tasks;
+using System.Windows;
+using Windows.ApplicationModel.Email;
+using Windows.Storage;
 using WPCordovaClassLib.Cordova;
 using WPCordovaClassLib.Cordova.Commands;
 using WPCordovaClassLib.Cordova.JSON;
@@ -43,91 +47,60 @@ namespace Cordova.Extension.Commands
             DispatchCommandResult(new PluginResult(PluginResult.Status.OK, true));
         }
 
+        private async Task<StorageFile> GetTextFile(string fileContent)
+        {
+            var localFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
+            var file = await localFolder.CreateFileAsync("emailsharecontent.txt", Windows.Storage.CreationCollisionOption.ReplaceExisting);
+            await Windows.Storage.FileIO.WriteTextAsync(file, fileContent);
+            return file;
+        }
+
         /// <summary>
         /// Öffnet den Email-Kontroller mit vorausgefüllten Daten.
         /// </summary>
         public void open(string jsonArgs)
         {
-            string[] args          = JsonHelper.Deserialize<string[]>(jsonArgs);
-            Options options        = JsonHelper.Deserialize<Options>(args[0]);
-            EmailComposeTask draft = GetDraftWithProperties(options);
+            string[] args = JsonHelper.Deserialize<string[]>(jsonArgs);
+            Options options = JsonHelper.Deserialize<Options>(args[0]);
 
-            DispatchCommandResult(new PluginResult(PluginResult.Status.OK, true));
-
-            OpenDraft(draft);
+            GetDraftWithProperties(options);
         }
 
         /// </summary>
         /// Erstellt den Email-Composer und fügt die übergebenen Eigenschaften ein.
         /// </summary>
-        private EmailComposeTask GetDraftWithProperties(Options options)
+        private async void GetDraftWithProperties(Options options)
         {
-            EmailComposeTask draft = new EmailComposeTask();
+            try
+            {
+                EmailMessage email = new EmailMessage();
+                email.Subject = options.Subject;
+                email.Body = options.Body;
 
-            SetSubject(options.Subject, draft);
-            SetBody(options.Body, options.IsHtml, draft);
-            SetTo(options.To, draft);
-            SetCc(options.Cc, draft);
-            SetBcc(options.Bcc, draft);
-            SetAttachments(options.Attachments, draft);
+                for (int i = 0; i < options.Attachments.Length; i++) {
+                    var file = await GetTextFile(options.Attachments[i]);
+                    var fileName = "unnamed.file";
 
-            return draft;
-        }
+                    if (options.AttachmentsFileNames != null) {
+                        if (options.AttachmentsFileNames[i] != null) {
+                            fileName = options.AttachmentsFileNames[i];
+                        }
+                    }
+                    
+                    var att = new EmailAttachment(fileName, file);
+                    email.Attachments.Add(att);
+                }
+                
+                Deployment.Current.Dispatcher.BeginInvoke(async () => {
+                    await EmailManager.ShowComposeNewEmailAsync(email);
+                });
 
-        /// </summary>
-        /// Zeigt den ViewController zum Versenden/Bearbeiten der Mail an.
-        /// </summary>
-        private void OpenDraft(EmailComposeTask draft)
-        {
-            draft.Show();
-        }
-
-        /// </summary>
-        /// Setzt den Subject der Mail.
-        /// </summary>
-        private void SetSubject(string subject, EmailComposeTask draft)
-        {
-            draft.Subject = subject;
-        }
-
-        /// </summary>
-        /// Setzt den Body der Mail.
-        /// </summary>
-        private void SetBody(string body, Boolean isHTML, EmailComposeTask draft)
-        {
-            draft.Body = body;
-        }
-
-        /// </summary>
-        /// Setzt die Empfänger der Mail.
-        /// </summary>
-        private void SetTo(string[] recipients, EmailComposeTask draft)
-        {
-            draft.To = string.Join(",", recipients);
-        }
-
-        /// </summary>
-        /// Setzt die CC-Empfänger der Mail.
-        /// </summary>
-        private void SetCc(string[] recipients, EmailComposeTask draft)
-        {
-            draft.Cc = string.Join(",", recipients);
-        }
-
-        /// </summary>
-        /// Setzt die BCC-Empfänger der Mail.
-        /// </summary>
-        private void SetBcc(string[] recipients, EmailComposeTask draft)
-        {
-            draft.Bcc = string.Join(",", recipients);
-        }
-
-        /// </summary>
-        /// Fügt die Anhände zur Mail hinzu.
-        /// </summary>
-        private void SetAttachments(string[] attachments, EmailComposeTask draft)
-        {
-            // Not supported on WP8.0 and WP8.1 Silverlight
+                DispatchCommandResult(new PluginResult(PluginResult.Status.OK, true));
+            }
+            catch (Exception ex)
+            {
+                DispatchCommandResult(new PluginResult(PluginResult.Status.ERROR, ex.Message));
+            }
         }
     }
 }
