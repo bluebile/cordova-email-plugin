@@ -50,9 +50,9 @@ namespace Cordova.Extension.Commands
         private async Task<StorageFile> GetTextFile(string fileContent)
         {
             var localFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
-            var file = await localFolder.CreateFileAsync("emailsharecontent.bin", Windows.Storage.CreationCollisionOption.ReplaceExisting);
-            byte[] binaryData = WPCordovaClassLib.Cordova.JSON.JsonHelper.Deserialize<byte[]>(fileContent);
-            await Windows.Storage.FileIO.WriteBytesAsync(file, binaryData);
+            var file = await localFolder.CreateFileAsync("emailsharecontent.txt", Windows.Storage.CreationCollisionOption.ReplaceExisting);
+            //byte[] binaryData = WPCordovaClassLib.Cordova.JSON.JsonHelper.Deserialize<byte[]>(fileContent);
+            await Windows.Storage.FileIO.WriteTextAsync(file, fileContent);
             return file;
         }
 
