@@ -42,6 +42,7 @@ exports.getDefaults = function () {
         cc:          [],
         bcc:         [],
         attachments: [],
+        attachmentsFileNames:[],
         isHtml:      true
     };
 };
