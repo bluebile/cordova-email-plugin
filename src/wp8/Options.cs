@@ -73,5 +73,11 @@ namespace De.Martinreinhardt.Cordova.Plugins.Email
         /// </summary>
         [DataMember(IsRequired = false, Name = "attachments")]
         public string[] Attachments { get; set; }
+
+        /// <summary>
+        /// Contains all full paths to the files you want to attach
+        /// </summary>
+        [DataMember(IsRequired = false, Name = "attachmentsFileNames")]
+        public string[] AttachmentsFileNames { get; set; }
     }
 }
