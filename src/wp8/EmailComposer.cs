@@ -47,7 +47,7 @@ namespace Cordova.Extension.Commands
             DispatchCommandResult(new PluginResult(PluginResult.Status.OK, true));
         }
 
-        private async Task<StorageFile> GetTextFile(string fileContent)
+        private async Task<StorageFile> GetFile(string fileContent)
         {
             var localFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
             var file = await localFolder.CreateFileAsync("emailsharecontent.bin", Windows.Storage.CreationCollisionOption.ReplaceExisting);
@@ -79,7 +79,7 @@ namespace Cordova.Extension.Commands
                 email.Body = options.Body;
 
                 for (int i = 0; i < options.Attachments.Length; i++) {
-                    var file = await GetTextFile(options.Attachments[i]);
+                    var file = await GetFile(options.Attachments[i]);
                     var fileName = "unnamed.file";
 
                     if (options.AttachmentsFileNames != null) {
